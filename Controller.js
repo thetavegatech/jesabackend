@@ -2,34 +2,57 @@ const Customer = require('./Model');
 const QRCode = require('qrcode');
 
 // Create a new customer
+// Create a new customer
 exports.createCustomer = async (req, res) => {
-    try {
-      const { members, ...customerData } = req.body;
-  
-      // Generate QR code for the customer
-      const customerQRCodeData = `${customerData.name}, ${customerData.place}, ${customerData.phone}, ${customerData.source}, ${JSON.stringify(members)}, ${customerData.occupation}`;
-      const customerQRCodeUrl = await QRCode.toDataURL(customerQRCodeData);
-  
-      // Create a new customer object with customer QR code URL
-      const newCustomer = new Customer({ ...customerData, qrCodeUrl: customerQRCodeUrl });
-  
-      // Generate QR codes for each member
-      const updatedMembers = await Promise.all(members.map(async (member) => {
+  try {
+    // Destructure members and the rest of the customer data
+    const { members, ...customerData } = req.body;
+
+    console.log('Received customer data:', customerData);
+    console.log('Received members data:', members);
+
+    // Validate required fields for customer
+    if (!customerData.name || !customerData.place || !customerData.phone || !customerData.source || !customerData.occupation) {
+      return res.status(400).json({ message: 'Missing required customer data' });
+    }
+
+    if (!Array.isArray(members)) {
+      return res.status(400).json({ message: 'Members must be an array' });
+    }
+
+    // Generate QR code for the customer
+    const customerQRCodeData = `${customerData.name}, ${customerData.place}, ${customerData.phone}, ${customerData.source}, ${JSON.stringify(members)}, ${customerData.occupation}`;
+    const customerQRCodeUrl = await QRCode.toDataURL(customerQRCodeData);
+
+    // Create a new customer object with customer QR code URL
+    const newCustomer = new Customer({ ...customerData, qrCodeUrl: customerQRCodeUrl });
+
+    // Generate QR codes for each member
+    const updatedMembers = await Promise.all(members.map(async (member, index) => {
+      try {
+        // Validate required fields for each member
+        if (!member.name || member.age === undefined || !member.occupation || !member.source || !member.place || !member.status) {
+          throw new Error(`Missing required member data at index ${index}`);
+        }
         const memberQRCodeData = `${member.name}, ${member.age}, ${member.occupation}, ${member.source}, ${member.place}, ${member.status}`;
         const memberQRCodeUrl = await QRCode.toDataURL(memberQRCodeData);
         return { ...member, qrCodeUrl: memberQRCodeUrl };
-      }));
-  
-      // Assign the updated members with QR codes to the customer
-      newCustomer.members = updatedMembers;
-  
-      const savedCustomer = await newCustomer.save();
-      res.status(201).json(savedCustomer);
-    } catch (error) {
-      console.error('Error creating customer:', error); // Log the error for debugging
-      res.status(400).json({ message: error.message });
-    }
-  };
+      } catch (memberError) {
+        throw new Error(`Error generating QR code for member at index ${index}: ${memberError.message}`);
+      }
+    }));
+
+    // Assign the updated members with QR codes to the customer
+    newCustomer.members = updatedMembers;
+
+    // Save the customer to the database
+    const savedCustomer = await newCustomer.save();
+    res.status(201).json(savedCustomer);
+  } catch (error) {
+    console.error('Error creating customer:', error); // Log the error for debugging
+    res.status(400).json({ message: error.message });
+  }
+};
 
 // Get all customers
 exports.getAllCustomers = async (req, res) => {
