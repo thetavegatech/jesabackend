@@ -23,7 +23,7 @@ const CustomerSchema = new mongoose.Schema({
   qrCodeUrl: { type: String, required: true },
   status: { type: String },
   gender: { type: String, required: true },
-  member: { type: Number, required: true },
+  member: { type: Number },
 });
 
 module.exports = mongoose.model('JesaCustomer', CustomerSchema);
