@@ -6,13 +6,11 @@ const QRCode = require('qrcode');
 // Create a new customer
 exports.createCustomer = async (req, res) => {
   try {
-    // Destructure members and the rest of the customer data
     const { members, ...customerData } = req.body;
 
     console.log('Received customer data:', customerData);
     console.log('Received members data:', members);
 
-    // Validate required fields for customer
     if (!customerData.name || !customerData.place || !customerData.phone || !customerData.source || !customerData.occupation) {
       return res.status(400).json({ message: 'Missing required customer data' });
     }
@@ -21,21 +19,27 @@ exports.createCustomer = async (req, res) => {
       return res.status(400).json({ message: 'Members must be an array' });
     }
 
-    // Generate QR code for the customer
-    const customerQRCodeData = `${customerData.name}, ${customerData.place}, ${customerData.phone}, ${customerData.source}, ${JSON.stringify(members)}, ${customerData.occupation}`;
+    // Create a new customer object without QR codes first
+    const newCustomer = new Customer(customerData);
+
+    // Save the customer to the database to obtain its ID
+    const savedCustomer = await newCustomer.save();
+
+    // Generate QR code for the customer, including the ID
+    const customerQRCodeData = `${savedCustomer._id}, ${customerData.name}, ${customerData.place}, ${customerData.phone}, ${customerData.source}, ${JSON.stringify(members)}, ${customerData.occupation}`;
     const customerQRCodeUrl = await QRCode.toDataURL(customerQRCodeData);
 
-    // Create a new customer object with customer QR code URL
-    const newCustomer = new Customer({ ...customerData, qrCodeUrl: customerQRCodeUrl });
+    // Update the customer with the QR code URL
+    savedCustomer.qrCodeUrl = customerQRCodeUrl;
 
-    // Generate QR codes for each member
+    // Generate QR codes for each member, including the member's ID
     const updatedMembers = await Promise.all(members.map(async (member, index) => {
       try {
-        // Validate required fields for each member
         if (!member.name || member.age === undefined || !member.occupation) {
           throw new Error(`Missing required member data at index ${index}`);
         }
-        const memberQRCodeData = `${member.name}, ${member.age}, ${member.occupation}`;
+        // Generate QR code data including member ID
+        const memberQRCodeData = `${member._id || mongoose.Types.ObjectId()}, ${member.name}, ${member.age}, ${member.occupation}`;
         const memberQRCodeUrl = await QRCode.toDataURL(memberQRCodeData);
         return { ...member, qrCodeUrl: memberQRCodeUrl };
       } catch (memberError) {
@@ -44,11 +48,12 @@ exports.createCustomer = async (req, res) => {
     }));
 
     // Assign the updated members with QR codes to the customer
-    newCustomer.members = updatedMembers;
+    savedCustomer.members = updatedMembers;
 
-    // Save the customer to the database
-    const savedCustomer = await newCustomer.save();
-    res.status(201).json(savedCustomer);
+    // Save the updated customer with members' QR codes
+    const updatedCustomer = await savedCustomer.save();
+
+    res.status(201).json(updatedCustomer);
   } catch (error) {
     console.error('Error creating customer:', error); // Log the error for debugging
     res.status(400).json({ message: error.message });
@@ -204,29 +209,4 @@ exports.getCustomerByNameAndPhone = async (req, res) => {
     }
   };
   
-  // Update customer status to 'OK' by ID
-  exports.updateCustomerStatus = async (req, res) => {
-    try {
-      const customerId = req.params.id;
-  
-      // Validate the ID format
-      if (!mongoose.Types.ObjectId.isValid(customerId)) {
-        return res.status(400).json({ message: 'Invalid customer ID format' });
-      }
-  
-      // Find the customer by ID
-      const customer = await Customer.findById(customerId);
-      if (!customer) {
-        return res.status(404).json({ message: 'Customer not found' });
-      }
-  
-      // Update the customer's status to 'OK'
-      customer.status = 'OK';
-      const updatedCustomer = await customer.save();
-  
-      res.status(200).json(updatedCustomer);
-    } catch (error) {
-      console.error('Error updating customer status:', error);
-      res.status(500).json({ message: error.message });
-    }
-  };
+
