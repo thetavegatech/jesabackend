@@ -8,7 +8,7 @@ const MemberSchema = new mongoose.Schema({
   place: { type: String},
   status: { type: String },
   qrCodeUrl: { type: String },
-  gender: { type: String},
+  gender: { type: String },
   phone: { type: String, unique: true },
 });
 
@@ -22,7 +22,7 @@ const CustomerSchema = new mongoose.Schema({
   occupation: { type: String, required: true },
   qrCodeUrl: { type: String, required: true },
   status: { type: String },
-  gender: { type: String, required: true },
+  gender: { type: String },
   member: { type: Number },
 });
 
