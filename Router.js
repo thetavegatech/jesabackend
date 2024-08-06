@@ -27,4 +27,7 @@ router.get('/customer/:customerId/members/:memberId', customerController.getMemb
 
 router.get('/customer/by-name-phone', customerController.getCustomerById1);
 
+// Update route to use POST and expect name and phone in the request body
+router.put('/customers/update-status', customerController.updateCustomerStatus);
+
 module.exports = router;

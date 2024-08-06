@@ -9,13 +9,14 @@ const MemberSchema = new mongoose.Schema({
   status: { type: String },
   qrCodeUrl: { type: String },
   gender: { type: String},
+  phone: { type: String, unique: true },
 });
 
 const CustomerSchema = new mongoose.Schema({
   name: { type: String, required: true },
   place: { type: String, required: true },
   age: { type: Number, required: true },
-  phone: { type: String, required: true },
+  phone: { type: String, unique: true },
   source: { type: String, required: true },
   members: [MemberSchema], // Embed the member schema
   occupation: { type: String, required: true },

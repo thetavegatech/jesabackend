@@ -1,4 +1,5 @@
 const Customer = require('./Model');
+const mongoose = require('mongoose');
 const QRCode = require('qrcode');
 
 // Create a new customer
@@ -12,7 +13,7 @@ exports.createCustomer = async (req, res) => {
     console.log('Received members data:', members);
 
     // Validate required fields for customer
-    if (!customerData.name || !customerData.place || !customerData.phone || !customerData.source || !customerData.occupation) {
+    if (!customerData._id || !customerData.name || !customerData.place || !customerData.phone || !customerData.source || !customerData.occupation) {
       return res.status(400).json({ message: 'Missing required customer data' });
     }
 
@@ -20,12 +21,18 @@ exports.createCustomer = async (req, res) => {
       return res.status(400).json({ message: 'Members must be an array' });
     }
 
+    // Generate a unique ID for the customer (if needed)
+    // For MongoDB, you can use the automatically generated _id
+
+    // Create a new customer object
+    const newCustomer = new Customer({ ...customerData });
+
     // Generate QR code for the customer
-    const customerQRCodeData = `${customerData.name}, ${customerData.place}, ${customerData.phone}, ${customerData.source}, ${JSON.stringify(members)}, ${customerData.occupation}`;
+    const customerQRCodeData = `${newCustomer._id}, ${customerData.name}, ${customerData.place}, ${customerData.phone}, ${customerData.source}, ${JSON.stringify(members)}, ${customerData.occupation}`;
     const customerQRCodeUrl = await QRCode.toDataURL(customerQRCodeData);
 
-    // Create a new customer object with customer QR code URL
-    const newCustomer = new Customer({ ...customerData, qrCodeUrl: customerQRCodeUrl });
+    // Add the QR code URL to the customer
+    newCustomer.qrCodeUrl = customerQRCodeUrl;
 
     // Generate QR codes for each member
     const updatedMembers = await Promise.all(members.map(async (member, index) => {
@@ -203,4 +210,29 @@ exports.getCustomerByNameAndPhone = async (req, res) => {
     }
   };
   
+  // Update customer status to 'OK' by ID
+  exports.updateCustomerStatus = async (req, res) => {
+    try {
+      const name = req.params.name;
   
+      // Check if the ID is valid
+      if (!mongoose.Types.ObjectId.isValid(name)) {
+        return res.status(400).json({ message: 'Invalid customer ID' });
+      }
+  
+      // Find the customer by ID
+      const customer = await Customer.findOne({ name });
+      if (!customer) {
+        return res.status(404).json({ message: 'Customer not found' });
+      }
+  
+      // Update the customer's status to 'OK'
+      customer.status = 'OK';
+      const updatedCustomer = await customer.save();
+  
+      res.status(200).json(updatedCustomer);
+    } catch (error) {
+      console.error('Error updating customer status:', error);
+      res.status(500).json({ message: error.message });
+    }
+  };
