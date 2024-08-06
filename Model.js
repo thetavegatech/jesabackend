@@ -20,8 +20,9 @@ const CustomerSchema = new mongoose.Schema({
   source: { type: String, required: true },
   members: [MemberSchema], // Embed the member schema
   occupation: { type: String, required: true },
-  qrCodeUrl: { type: String, required: true },
-  status: { type: String },
+  qrCodeUrl: { type: String},
+  // status: { type: String },
+  status: { type: String, default: 'Pending' },
   gender: { type: String },
   member: { type: Number },
 });

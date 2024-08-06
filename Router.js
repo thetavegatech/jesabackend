@@ -27,5 +27,6 @@ router.get('/customer/:customerId/members/:memberId', customerController.getMemb
 
 router.get('/customer/by-name-phone', customerController.getCustomerById1);
 
-
+// Update customer status
+router.patch('/customers/:id/status', customerController.updateCustomerStatus);
 module.exports = router;
