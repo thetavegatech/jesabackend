@@ -205,28 +205,84 @@ exports.getCustomerByNameAndPhone = async (req, res) => {
   };
   
   // Update customer status to 'OK' by ID
-  exports.updateCustomerStatus = async (req, res) => {
-    try {
-      const customerId = req.params.id;
+  // exports.updateCustomerStatus = async (req, res) => {
+  //   try {
+  //     const customerId = req.params.id;
   
-      // Validate the ID format
-      if (!mongoose.Types.ObjectId.isValid(customerId)) {
-        return res.status(400).json({ message: 'Invalid customer ID format' });
-      }
+  //     // Validate the ID format
+  //     if (!mongoose.Types.ObjectId.isValid(customerId)) {
+  //       return res.status(400).json({ message: 'Invalid customer ID format' });
+  //     }
   
-      // Find the customer by ID
-      const customer = await Customer.findById(customerId);
-      if (!customer) {
-        return res.status(404).json({ message: 'Customer not found' });
-      }
+  //     // Find the customer by ID
+  //     const customer = await Customer.findById(customerId);
+  //     if (!customer) {
+  //       return res.status(404).json({ message: 'Customer not found' });
+  //     }
   
-      // Update the customer's status
-      customer.status = req.body.status; // Use the status from the request body
-      const updatedCustomer = await customer.save();
+  //     // Update the customer's status
+  //     customer.status = req.body.status; // Use the status from the request body
+  //     const updatedCustomer = await customer.save();
   
-      res.status(200).json(updatedCustomer);
-    } catch (error) {
-      console.error('Error updating customer status:', error);
-      res.status(500).json({ message: error.message });
+  //     res.status(200).json(updatedCustomer);
+  //   } catch (error) {
+  //     console.error('Error updating customer status:', error);
+  //     res.status(500).json({ message: error.message });
+  //   }
+  // };
+
+  // Update customer status by name and phone number
+exports.updateCustomerStatusByNameAndPhone = async (req, res) => {
+  try {
+    const { name, phone, status } = req.body;
+
+    // Validate input
+    if (!name || !phone || !status) {
+      return res.status(400).json({ message: 'Name, phone number, and status are required' });
     }
-  };
+
+    // Find the customer with the provided name and phone number
+    const customer = await Customer.findOne({ name, phone });
+    if (!customer) {
+      return res.status(404).json({ message: 'Customer not found' });
+    }
+
+    // Update the customer's status
+    customer.status = status;
+    const updatedCustomer = await customer.save();
+
+    res.status(200).json(updatedCustomer);
+  } catch (error) {
+    console.error('Error updating customer status:', error);
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// Update customer status
+exports.updateCustomerStatus = async (req, res) => {
+  try {
+    console.log('Request Body:', req.body);
+
+    const { name, phone, status } = req.body;
+
+    if (!name || !phone || !status) {
+      console.error('Validation failed:', req.body);
+      return res.status(400).json({ message: 'Name, phone number, and status are required' });
+    }
+
+    const customer = await Customer.findOne({ name, phone });
+    if (!customer) {
+      console.error(`Customer not found: Name - ${name}, Phone - ${phone}`);
+      return res.status(404).json({ message: 'Customer not found' });
+    }
+
+    customer.status = status;
+    const updatedCustomer = await customer.save();
+
+    console.log('Updated Customer:', updatedCustomer);
+    res.status(200).json(updatedCustomer);
+  } catch (error) {
+    console.error('Error updating customer status:', error);
+    res.status(500).json({ message: 'Internal Server Error' });
+  }
+};
