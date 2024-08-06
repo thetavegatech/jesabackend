@@ -13,7 +13,7 @@ exports.createCustomer = async (req, res) => {
     console.log('Received members data:', members);
 
     // Validate required fields for customer
-    if (!customerData._id || !customerData.name || !customerData.place || !customerData.phone || !customerData.source || !customerData.occupation) {
+    if (!customerData.name || !customerData.place || !customerData.phone || !customerData.source || !customerData.occupation) {
       return res.status(400).json({ message: 'Missing required customer data' });
     }
 
@@ -21,18 +21,12 @@ exports.createCustomer = async (req, res) => {
       return res.status(400).json({ message: 'Members must be an array' });
     }
 
-    // Generate a unique ID for the customer (if needed)
-    // For MongoDB, you can use the automatically generated _id
-
-    // Create a new customer object
-    const newCustomer = new Customer({ ...customerData });
-
     // Generate QR code for the customer
-    const customerQRCodeData = `${newCustomer._id}, ${customerData.name}, ${customerData.place}, ${customerData.phone}, ${customerData.source}, ${JSON.stringify(members)}, ${customerData.occupation}`;
+    const customerQRCodeData = `${customerData.name}, ${customerData.place}, ${customerData.phone}, ${customerData.source}, ${JSON.stringify(members)}, ${customerData.occupation}`;
     const customerQRCodeUrl = await QRCode.toDataURL(customerQRCodeData);
 
-    // Add the QR code URL to the customer
-    newCustomer.qrCodeUrl = customerQRCodeUrl;
+    // Create a new customer object with customer QR code URL
+    const newCustomer = new Customer({ ...customerData, qrCodeUrl: customerQRCodeUrl });
 
     // Generate QR codes for each member
     const updatedMembers = await Promise.all(members.map(async (member, index) => {
@@ -213,15 +207,15 @@ exports.getCustomerByNameAndPhone = async (req, res) => {
   // Update customer status to 'OK' by ID
   exports.updateCustomerStatus = async (req, res) => {
     try {
-      const name = req.params.name;
+      const customerId = req.params.id;
   
-      // Check if the ID is valid
-      if (!mongoose.Types.ObjectId.isValid(name)) {
-        return res.status(400).json({ message: 'Invalid customer ID' });
+      // Validate the ID format
+      if (!mongoose.Types.ObjectId.isValid(customerId)) {
+        return res.status(400).json({ message: 'Invalid customer ID format' });
       }
   
       // Find the customer by ID
-      const customer = await Customer.findOne({ name });
+      const customer = await Customer.findById(customerId);
       if (!customer) {
         return res.status(404).json({ message: 'Customer not found' });
       }
