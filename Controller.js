@@ -32,10 +32,10 @@ exports.createCustomer = async (req, res) => {
     const updatedMembers = await Promise.all(members.map(async (member, index) => {
       try {
         // Validate required fields for each member
-        if (!member.name || member.age === undefined || !member.occupation || !member.source || !member.place || !member.status) {
+        if (!member.name || member.age === undefined || !member.occupation) {
           throw new Error(`Missing required member data at index ${index}`);
         }
-        const memberQRCodeData = `${member.name}, ${member.age}, ${member.occupation}, ${member.source}, ${member.place}, ${member.status}`;
+        const memberQRCodeData = `${member.name}, ${member.age}, ${member.occupation}`;
         const memberQRCodeUrl = await QRCode.toDataURL(memberQRCodeData);
         return { ...member, qrCodeUrl: memberQRCodeUrl };
       } catch (memberError) {
