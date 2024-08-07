@@ -29,8 +29,13 @@ router.get('/customer/by-name-phone', customerController.getCustomerById1);
 
 // Update customer status
 // router.patch('/customers/:id/status', customerController.updateCustomerStatus);
-
 // Update customer status route
 router.put('/customers/update-status', customerController.updateCustomerStatus);
+
+// Update customer status route
+router.put('/customers/update-status', customerController.updateStatus);
+
+
+router.get('/qrcode-by-name-and-phone', customerController.getQRCodeByNameAndPhone);
 
 module.exports = router;

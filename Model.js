@@ -6,7 +6,7 @@ const MemberSchema = new mongoose.Schema({
   occupation: { type: String},
   source: { type: String},
   place: { type: String},
-  status: { type: String },
+  status: { type: String, default: 'Pending' },
   qrCodeUrl: { type: String },
   gender: { type: String },
   phone: { type: String, unique: true },
