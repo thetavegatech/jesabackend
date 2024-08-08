@@ -15,7 +15,7 @@ const MemberSchema = new mongoose.Schema({
 const CustomerSchema = new mongoose.Schema({
   name: { type: String, required: true },
   place: { type: String, required: true },
-  age: { type: Number, required: true },
+  age: { type: String, required: true },
   phone: { type: String },
   source: { type: String, required: true },
   members: [MemberSchema], // Embed the member schema
