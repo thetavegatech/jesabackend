@@ -296,6 +296,9 @@ exports.createCustomer = async (req, res) => {
   try {
     // Destructure members and the rest of the customer data
     const { members, ...customerData } = req.body;
+    
+ // Normalize the name to lowercase
+    customerData.name = customerData.name ? customerData.name.trim().toLowerCase() : '';
 
     console.log('Received customer data:', customerData);
     console.log('Received members data:', members);
